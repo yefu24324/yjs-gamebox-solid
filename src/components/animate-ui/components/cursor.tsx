@@ -1,8 +1,6 @@
-import { animate, motionValue } from "motion";
 import { type Accessor, createContext, createEffect, createSignal, type JSX, onCleanup, type Setter, Show, useContext } from "solid-js";
-import { Motion, Presence } from "solid-motionone";
-
-import { cn } from "~/libs/cn";
+import { createSpring, Motion, Presence } from "solid-motion";
+import { cn } from "../../../libs/cn";
 
 type CursorContextType = {
   cursorPos: Accessor<{ x: number; y: number }>;
@@ -59,16 +57,16 @@ function CursorProvider(props: CursorProviderProps) {
   });
 
   const contextValue = () => ({
-    cursorPos: cursorPos,
-    isActive: isActive,
     containerRef: () => containerRef || null,
+    cursorPos: cursorPos,
     cursorRef,
+    isActive: isActive,
     setCursorRef,
   });
 
   return (
     <CursorContext.Provider value={contextValue()}>
-      <div ref={containerRef} data-slot="cursor-provider" {...props}>
+      <div data-slot="cursor-provider" ref={containerRef} {...props}>
         {props.children}
       </div>
     </CursorContext.Provider>
@@ -85,7 +83,7 @@ function Cursor(props: CursorProps) {
   createEffect(() => {
     const parentElement = containerRef()?.parentElement;
 
-    // if (parentElement && isActive()) parentElement.style.cursor = "none";
+    if (parentElement && isActive()) parentElement.style.cursor = "none";
 
     onCleanup(() => {
       if (parentElement) parentElement.style.cursor = "default";
@@ -104,12 +102,12 @@ function Cursor(props: CursorProps) {
     <Presence>
       <Show when={isActive()}>
         <Motion
-          ref={setCursorRef}
-          data-slot="cursor"
+          animate={{ opacity: 1, scale: 1 }}
           class={cn("transform-[translate(-50%,-50%)] pointer-events-none z-[9999] absolute", props.class)}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0, opacity: 0 }}
+          data-slot="cursor"
+          exit={{ opacity: 0, scale: 0 }}
+          initial={{ opacity: 0, scale: 0 }}
+          ref={setCursorRef}
           {...props}
         >
           {props.children}
@@ -178,41 +176,57 @@ function CursorFollow(props: CursorFollowProps) {
     return newOffset;
   };
 
-  const x = motionValue(0);
-  const y = motionValue(0);
-
-  x.on("change", (latest) => {
-    if (cursorFollowRef) {
-      cursorFollowRef.style.left = `${latest}px`;
-    }
-  });
-
-  y.on("change", (latest) => {
-    if (cursorFollowRef) {
-      cursorFollowRef.style.top = `${latest}px`;
-    }
-  });
+  const springX = createSpring(
+    () => {
+      const offset = calculateOffset();
+      const cursorRect = cursorRef()?.getBoundingClientRect();
+      const cursorWidth = cursorRect?.width ?? 20;
+      return cursorPos().x - offset.x + cursorWidth / 2;
+    },
+    {
+      bounce: 0,
+      damping: 50,
+      stiffness: 500,
+    },
+  );
+  const springY = createSpring(
+    () => {
+      const offset = calculateOffset();
+      const cursorRect = cursorRef()?.getBoundingClientRect();
+      const cursorHeight = cursorRect?.height ?? 20;
+      return cursorPos().y - offset.y + cursorHeight / 2;
+    },
+    {
+      bounce: 0,
+      damping: 50,
+      stiffness: 500,
+    },
+  );
 
   createEffect(() => {
-    const offset = calculateOffset();
-    const cursorRect = cursorRef()?.getBoundingClientRect();
-    const cursorWidth = cursorRect?.width ?? 20;
-    const cursorHeight = cursorRect?.height ?? 20;
-
-    animate(x, cursorPos().x - offset.x + cursorWidth / 2, { type: "spring", stiffness: 500, damping: 50, bounce: 0 });
-    animate(y, cursorPos().y - offset.y + cursorHeight / 2, { type: "spring", stiffness: 500, damping: 50, bounce: 0 });
+    const left = springX();
+    const top = springY();
+    if (cursorFollowRef) {
+      cursorFollowRef.style.left = `${left}px`;
+      cursorFollowRef.style.top = `${top}px`;
+    }
   });
 
   return (
     <Presence>
-      <Show when={true}>
+      <Show when={isActive()}>
         <Motion
-          ref={cursorFollowRef}
-          data-slot="cursor-follow"
+          animate={{
+            opacity: 1,
+            scale: 1,
+            // x: springX(),
+            // y: springY(),
+          }}
           class={cn("transform-[translate(-50%,-50%)] pointer-events-none z-[9998] absolute", className)}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0, opacity: 0 }}
+          data-slot="cursor-follow"
+          exit={{ opacity: 0, scale: 0 }}
+          initial={{ opacity: 0, scale: 0 }}
+          ref={cursorFollowRef}
           {...otherProps}
         >
           {children}

@@ -1,5 +1,5 @@
-import { createEventListener } from "@solid-primitives/event-listener";
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For } from "solid-js";
+import { MotionEffect } from "~/components/animate-ui/effects/motion-effect";
 import { ChessPiece } from "./chess-piece";
 import { useChineseChessContext } from "./chinese-chess-context";
 import { BOARD_HEIGHT, BOARD_WIDTH, GRID_SIZE } from "./constant";
@@ -9,53 +9,11 @@ import type { ChessPieceData, Position } from "./types";
 export function ChessBoard() {
   const { yChessPieceMap, chessPieces, movePiece, selectionPiece } = useChineseChessContext();
 
-  const [isDragging, setIsDragging] = createSignal(false);
-  const [dragPosition, setDragPosition] = createSignal({ x: 0, y: 0 });
   const [gameBoxDiv, setGameBoxDiv] = createSignal<HTMLDivElement>();
 
-  const handleMouseDown = (e: MouseEvent, piece: ChessPieceData) => {
-    e.preventDefault();
-    const boxEl = gameBoxDiv();
-    if (!boxEl) return;
-    const offset = {
-      x: e.pageX - boxEl.offsetLeft - GRID_SIZE / 2,
-      y: e.pageY - boxEl.offsetTop - GRID_SIZE / 2,
-    };
-
+  const onPieceClick = (piece: ChessPieceData) => {
     selectionPiece.set(piece);
-    setIsDragging(true);
-    setDragPosition(offset);
   };
-
-  createEventListener(window, "mousemove", (event) => {
-    const piece = selectionPiece.get();
-    if (!isDragging() || !piece) return;
-    const el = gameBoxDiv();
-    if (el) {
-      const vx = event.pageX - el.offsetLeft - GRID_SIZE / 2;
-      const vy = event.pageY - el.offsetTop - GRID_SIZE / 2;
-      setDragPosition({ x: vx, y: vy });
-    }
-  });
-
-  createEventListener(window, "mouseup", (event) => {
-    const piece = selectionPiece.get();
-    if (!isDragging() || !piece) return;
-
-    const boardElement = document.querySelector(".chess-board") as HTMLElement;
-    if (!boardElement) return;
-
-    const rect = boardElement.getBoundingClientRect();
-    const x = Math.round((event.clientX - rect.left - 20) / GRID_SIZE);
-    const y = Math.round((event.clientY - rect.top - 20) / GRID_SIZE);
-
-    if (x >= 0 && x <= 8 && y >= 0 && y <= 9) {
-      const newPosition = { x, y };
-      movePiece(piece.position, newPosition);
-    }
-
-    setIsDragging(false);
-  });
 
   return (
     <div class="bg-card from-amber-100 to-amber-200 p-6 rounded-xl shadow-2xl border-4 border-amber-800">
@@ -101,17 +59,21 @@ export function ChessBoard() {
           </text>
         </svg>
         <For each={chessPieces.get()}>
-          {(piece) => {
-            function isCurrentlyDragged() {
-              return selectionPiece.get()?.position.x === piece.position.x && selectionPiece.get()?.position.y === piece.position.y;
-            }
-
-            return <ChessPiece dragPosition={dragPosition()} isDragging={isCurrentlyDragged()} onMouseDown={(e) => handleMouseDown(e, piece)} piece={piece} />;
+          {(piece, index) => {
+            return (
+              <MotionEffect
+                delay={0.1 + index() * 0.1}
+                fade
+                slide={{
+                  direction: "down",
+                }}
+                zoom
+              >
+                <ChessPiece isDragging={false} onClick={() => onPieceClick(piece)} piece={piece} />
+              </MotionEffect>
+            );
           }}
         </For>
-        <Show when={isDragging() && selectionPiece.get()}>
-          <ChessDragPlaceholder dragPosition={dragPosition()} />
-        </Show>
       </div>
     </div>
   );

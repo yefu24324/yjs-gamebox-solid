@@ -65,6 +65,9 @@ importers:
       solid-markdown:
         specifier: ^2.0.14
         version: 2.0.14(solid-js@1.9.7)
+      solid-motion:
+        specifier: 1.0.0-alpha.1
+        version: 1.0.0-alpha.1(solid-js@1.9.7)
       solid-motionone:
         specifier: ^1.0.4
         version: 1.0.4(solid-js@1.9.7)
@@ -3456,6 +3459,11 @@ packages:
     engines: {node: '>=18', pnpm: '>=8.6.0'}
     peerDependencies:
       solid-js: ^1.6.0
+
+  solid-motion@1.0.0-alpha.1:
+    resolution: {integrity: sha512-EIoceAEuHZ6nGnM8JIldGbdC9krsL3GdgKqpCO5qJPyIRzo+E4PJFeYLjEvqb0UaJJIyBHCK1kws04qXzPw1uA==}
+    peerDependencies:
+      solid-js: ^1.8.0
 
   solid-motionone@1.0.4:
     resolution: {integrity: sha512-aqEjgecoO9raDFznu/dEci7ORSmA26Kjj9J4Cn1Gyr0GZuOVdvsNxdxClTL9J40Aq/uYFx4GLwC8n70fMLHiuA==}
@@ -7683,6 +7691,19 @@ snapshots:
       vfile: 6.0.3
     transitivePeerDependencies:
       - supports-color
+
+  solid-motion@1.0.0-alpha.1(solid-js@1.9.7):
+    dependencies:
+      '@solid-primitives/media': 2.3.3(solid-js@1.9.7)
+      '@solid-primitives/refs': 1.1.2(solid-js@1.9.7)
+      '@solid-primitives/transition-group': 1.1.2(solid-js@1.9.7)
+      motion: 12.23.12
+      motion-dom: 12.23.12
+      solid-js: 1.9.7
+    transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
+      - react
+      - react-dom
 
   solid-motionone@1.0.4(solid-js@1.9.7):
     dependencies:

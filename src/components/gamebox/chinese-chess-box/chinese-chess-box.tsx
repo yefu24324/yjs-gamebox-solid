@@ -80,6 +80,13 @@ export default function ChineseChessBox(props: ChineseChessBoxProps) {
       { id: "r-兵-3-6", position: { x: 6, y: 3 }, side: "r", type: "兵" },
       { id: "r-兵-3-8", position: { x: 8, y: 3 }, side: "r", type: "兵" },
       // 黑方棋子
+      { id: "b-兵-6-0", position: { x: 0, y: 6 }, side: "b", type: "兵" },
+      { id: "b-兵-6-2", position: { x: 2, y: 6 }, side: "b", type: "兵" },
+      { id: "b-兵-6-4", position: { x: 4, y: 6 }, side: "b", type: "兵" },
+      { id: "b-兵-6-6", position: { x: 6, y: 6 }, side: "b", type: "兵" },
+      { id: "b-兵-6-8", position: { x: 8, y: 6 }, side: "b", type: "兵" },
+      { id: "b-炮-7-1", position: { x: 1, y: 7 }, side: "b", type: "炮" },
+      { id: "b-炮-7-7", position: { x: 7, y: 7 }, side: "b", type: "炮" },
       { id: "b-车-9-0", position: { x: 0, y: 9 }, side: "b", type: "车" },
       { id: "b-马-9-1", position: { x: 1, y: 9 }, side: "b", type: "马" },
       { id: "b-相-9-2", position: { x: 2, y: 9 }, side: "b", type: "相" },
@@ -89,13 +96,6 @@ export default function ChineseChessBox(props: ChineseChessBoxProps) {
       { id: "b-相-9-6", position: { x: 6, y: 9 }, side: "b", type: "相" },
       { id: "b-马-9-7", position: { x: 7, y: 9 }, side: "b", type: "马" },
       { id: "b-车-9-8", position: { x: 8, y: 9 }, side: "b", type: "车" },
-      { id: "b-炮-7-1", position: { x: 1, y: 7 }, side: "b", type: "炮" },
-      { id: "b-炮-7-7", position: { x: 7, y: 7 }, side: "b", type: "炮" },
-      { id: "b-兵-6-0", position: { x: 0, y: 6 }, side: "b", type: "兵" },
-      { id: "b-兵-6-2", position: { x: 2, y: 6 }, side: "b", type: "兵" },
-      { id: "b-兵-6-4", position: { x: 4, y: 6 }, side: "b", type: "兵" },
-      { id: "b-兵-6-6", position: { x: 6, y: 6 }, side: "b", type: "兵" },
-      { id: "b-兵-6-8", position: { x: 8, y: 6 }, side: "b", type: "兵" },
     ];
     yChessPieceMap.clear();
     initedDataa.forEach((piece) => {
