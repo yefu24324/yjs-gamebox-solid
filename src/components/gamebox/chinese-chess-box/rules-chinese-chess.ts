@@ -1,5 +1,13 @@
 import type { ChessPieceData, Position } from "./types";
 
+/** 推进 */
+export interface Advance {
+  /** 可移动范围 */
+  reach: Position[];
+  /** 可攻击目标（最多4个） */
+  target: Position[];
+}
+
 /**
  * 查看棋子可达范围
  *
