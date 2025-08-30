@@ -15,9 +15,9 @@ export interface Advance {
  * @param chessSet 棋盘上的所有棋子
  * @returns 可移动的位置和可以吃的子
  */
-export function previewChessMove(chess: ChessPieceData, board: ChessPieceData[]): Position[] {
+export function previewChessMove(chess: ChessPieceData, board: ChessPieceData[]): Advance {
   const op = chess.position;
-  if (op.x < 0 || op.x > 8 || op.y < 0 || op.y > 9) return [];
+  if (op.x < 0 || op.x > 8 || op.y < 0 || op.y > 9) return { reach: [], target: [] };
   switch (chess.type) {
     case "兵":
       return bingReach(chess, board);
@@ -54,13 +54,15 @@ function getByPos(arr: ChessPieceData[], x: number, y: number): ChessPieceData |
  * @param origin 当前棋子
  * @returns 可移动范围
  */
-export function bingReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
-  const reach: Position[] = [];
-
+export function bingReach(origin: ChessPieceData, board: ChessPieceData[]): Advance {
+  const advance: Advance = { reach: [], target: [] };
+  const reach = advance.reach;
+  const target = advance.target;
   /** 阵营检查 */
   function test(x: number, y: number) {
     const tmp = getByPos(board, x, y);
-    if (!tmp || tmp.side !== origin.side) reach.push({ x, y });
+    if (!tmp) reach.push({ x, y });
+    else if (tmp.side !== origin.side) target.push({ x, y });
   }
 
   const { x, y } = origin.position;
@@ -70,18 +72,18 @@ export function bingReach(origin: ChessPieceData, board: ChessPieceData[]): Posi
     if (y < 9) {
       test(x, y + 1);
       // 过河前只能前进1步
-      if (y < 5) return reach;
+      if (y < 5) return advance;
     }
   } else if (y > 0) {
     test(x, y - 1);
-    if (y > 4) return reach;
+    if (y > 4) return advance;
   }
 
   // 左右
   if (x > 0) test(x - 1, y);
   if (x < 8) test(x + 1, y);
 
-  return reach;
+  return advance;
 }
 
 /**
@@ -96,8 +98,10 @@ export function bingReach(origin: ChessPieceData, board: ChessPieceData[]): Posi
  * @param board 棋盘
  * @returns 可移动范围
  */
-export function paoReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
-  const reach: Position[] = [];
+export function paoReach(origin: ChessPieceData, board: ChessPieceData[]): Advance {
+  const advance: Advance = { reach: [], target: [] };
+  const reach = advance.reach;
+  const target = advance.target;
 
   /**
    * @param size x或y的最大值
@@ -107,8 +111,7 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[]): Posit
    */
   function find(size: number, center: number, piece: (i: number) => ChessPieceData | undefined, suited: (i: number) => Position) {
     for (let i = center - 1; i >= 0; i--) {
-      const tmp = piece(i);
-      if (!tmp) {
+      if (!piece(i)) {
         reach.push(suited(i));
         continue;
       }
@@ -116,24 +119,23 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[]): Posit
       if (i < 2) break;
       // 检查有无炮击对象
       for (i--; i >= 0; i--) {
-        const target = piece(i);
-        if (target && target.side !== origin.side) {
-          reach.push(suited(i));
+        const tmp = piece(i);
+        if (tmp && tmp.side !== origin.side) {
+          target.push(suited(i));
           break;
         }
       }
     }
     for (let i = center + 1; i <= size; i++) {
-      const tmp = piece(i);
-      if (!tmp) {
+      if (!piece(i)) {
         reach.push(suited(i));
         continue;
       }
       if (i > size - 2) break;
       for (i++; i <= size; i++) {
-        const target = piece(i);
-        if (target && target.side !== origin.side) {
-          reach.push(suited(i));
+        const tmp = piece(i);
+        if (tmp && tmp.side !== origin.side) {
+          target.push(suited(i));
           break;
         }
       }
@@ -157,12 +159,14 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[]): Posit
     (y) => ({ x: op.x, y }),
   );
 
-  return reach;
+  return advance;
 }
 
 /** 车的可达范围 */
-export function cheReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
-  const reach: Position[] = [];
+export function cheReach(origin: ChessPieceData, board: ChessPieceData[]): Advance {
+  const advance: Advance = { reach: [], target: [] };
+  const reach = advance.reach;
+  const target = advance.target;
 
   /**
    * @param size x或y的最大值
@@ -176,7 +180,7 @@ export function cheReach(origin: ChessPieceData, board: ChessPieceData[]): Posit
       if (!tmp) reach.push(suited(i));
       // 检查有无攻击对象
       else if (tmp.side !== origin.side) {
-        reach.push(suited(i));
+        target.push(suited(i));
         break;
       }
     }
@@ -184,7 +188,7 @@ export function cheReach(origin: ChessPieceData, board: ChessPieceData[]): Posit
       const tmp = piece(i);
       if (!tmp) reach.push(suited(i));
       else if (tmp.side !== origin.side) {
-        reach.push(suited(i));
+        target.push(suited(i));
         break;
       }
     }
@@ -207,14 +211,14 @@ export function cheReach(origin: ChessPieceData, board: ChessPieceData[]): Posit
     (y) => ({ x: op.x, y }),
   );
 
-  return reach;
+  return advance;
 }
 
 /** 马的可达范围 */
-export function maReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
+export function maReach(origin: ChessPieceData, board: ChessPieceData[]): Advance {
   const { x, y } = origin.position;
   // 阻挡点、落脚点（每个方向各有2点）
-  const targets = [
+  const expScope = [
     [
       [x, y - 1], // 上
       [x - 1, y - 2],
@@ -236,30 +240,36 @@ export function maReach(origin: ChessPieceData, board: ChessPieceData[]): Positi
       [x + 2, y - 1],
     ],
   ];
-  const reach = [];
+  const advance: Advance = { reach: [], target: [] };
+  const reach = advance.reach;
+  const target = advance.target;
 
   // 检查每个点
-  for (const [[ox, oy], [ax, ay], [bx, by]] of targets) {
+  for (const [[ox, oy], [ax, ay], [bx, by]] of expScope) {
     // 马脚越界 or 憋马脚
     if (ox < 0 || ox > 8 || oy < 0 || oy > 9 || exists(board, ox, oy)) continue;
 
     // 不越界
     if (!(ax < 0 || ax > 8 || ay < 0 || ay > 9)) {
       const tmp = getByPos(board, ax, ay);
+      const a = { x: ax, y: ay };
       // 空位、敌对
-      if (!tmp || tmp.side !== origin.side) reach.push({ x: ax, y: ay });
+      if (!tmp) reach.push(a);
+      else if (tmp.side !== origin.side) target.push(a);
     }
     if (!(bx < 0 || bx > 8 || by < 0 || by > 9)) {
       const tmp = getByPos(board, bx, by);
-      if (!tmp || tmp.side !== origin.side) reach.push({ x: bx, y: by });
+      const b = { x: bx, y: by };
+      if (!tmp) reach.push(b);
+      else if (tmp.side !== origin.side) target.push(b);
     }
   }
 
-  return reach;
+  return advance;
 }
 
 /** 象的可达范围 */
-export function xiangReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
+export function xiangReach(origin: ChessPieceData, board: ChessPieceData[]): Advance {
   const { x, y } = origin.position;
   // 阻挡点、落脚点
   const targets = [
@@ -280,16 +290,20 @@ export function xiangReach(origin: ChessPieceData, board: ChessPieceData[]): Pos
       [x - 2, y - 2],
     ],
   ];
-  const reach = [];
+  const advance: Advance = { reach: [], target: [] };
+  const reach = advance.reach;
+  const target = advance.target;
 
   for (const [[ox, oy], [dx, dy]] of targets) {
     if (ox < 0 || ox > 8 || oy < 0 || oy > 9 || dx < 0 || dx > 8 || dy < 0 || dy > 9 || exists(board, ox, oy)) continue;
 
     const tmp = getByPos(board, dx, dy);
-    if (!tmp || tmp.side !== origin.side) reach.push({ x: dx, y: dy });
+    const d = { x: dx, y: dy };
+    if (!tmp) reach.push(d);
+    else if (tmp.side !== origin.side) target.push(d);
   }
 
-  return reach;
+  return advance;
 }
 
 /** 士 只能在九宫格4角与中心移动 */
@@ -301,37 +315,44 @@ const SHI_PRESET_AREA = [
 ];
 
 /** 士的可达范围 */
-export function shiReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
+export function shiReach(origin: ChessPieceData, board: ChessPieceData[]): Advance {
   const op = origin.position;
-  const reach = [];
+  const advance: Advance = { reach: [], target: [] };
+  const reach = advance.reach;
+  const target = advance.target;
 
   // 士在九宫格中心
   if (op.x === 4) {
     for (let { x, y } of SHI_PRESET_AREA) {
       if (op.y > 2) y += 7;
       const tmp = getByPos(board, x, y);
-      if (!tmp || tmp.side !== origin.side) reach.push({ x, y });
+      const d = { x, y };
+      if (!tmp) reach.push(d);
+      else if (tmp.side !== origin.side) target.push(d);
     }
-    return reach;
+    return advance;
   }
 
   // 士在九宫格四角，先检查中心有没有棋子
   const cp = { x: 4, y: op.y > 2 ? 8 : 1 };
   const tmp = getByPos(board, cp.x, cp.y);
-  if (!tmp || tmp.side !== origin.side) reach.push(cp);
-  return reach;
+  if (!tmp) reach.push(cp);
+  else if (tmp.side !== origin.side) target.push(cp);
+  return advance;
 }
 
 /** 将帅的可达范围 */
-export function shuaiReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
-  const { x, y } = origin.position;
-  const reach: Position[] = [];
-
-  function test(i: number, j: number) {
-    const tmp = getByPos(board, i, j);
-    if (!tmp || tmp.side !== origin.side) reach.push({ x: i, y: j });
+export function shuaiReach(origin: ChessPieceData, board: ChessPieceData[]): Advance {
+  const advance: Advance = { reach: [], target: [] };
+  const reach = advance.reach;
+  const target = advance.target;
+  function test(x: number, y: number) {
+    const tmp = getByPos(board, x, y);
+    if (!tmp) reach.push({ x, y });
+    else if (tmp.side !== origin.side) target.push({ x, y });
   }
 
+  const { x, y } = origin.position;
   // 上下边界
   if (y !== 7 && y !== 0) test(x, y - 1);
   if (y !== 2 && y !== 9) test(x, y + 1);
@@ -340,5 +361,5 @@ export function shuaiReach(origin: ChessPieceData, board: ChessPieceData[]): Pos
   if (x > 0) test(x - 1, y);
   if (x < 8) test(x + 1, y);
 
-  return reach;
+  return advance;
 }
